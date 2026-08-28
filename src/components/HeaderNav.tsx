@@ -9,6 +9,8 @@ import {
   Sparkles,
   UserCheck,
   LogOut,
+  Save,
+  Check,
 } from 'lucide-react';
 
 interface HeaderNavProps {
@@ -19,6 +21,7 @@ interface HeaderNavProps {
   onOpenLeaderboard: () => void;
   onSelectStage: (stageNum: number) => void;
   onLogout: () => void;
+  onManualSave?: () => Promise<boolean | undefined>;
 }
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({
@@ -29,9 +32,11 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
   onOpenLeaderboard,
   onSelectStage,
   onLogout,
+  onManualSave,
 }) => {
   const [bgmEnabled, setBgmEnabled] = useState<boolean>(soundManager.isBGMEnabled());
   const [sfxEnabled, setSfxEnabled] = useState<boolean>(soundManager.isSFXEnabled());
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   useEffect(() => {
     const unsubscribe = soundManager.subscribe(() => {
@@ -49,6 +54,22 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
   const handleToggleSfx = () => {
     const next = soundManager.toggleSFX();
     setSfxEnabled(next);
+  };
+
+  const handleSaveClick = async () => {
+    if (saveStatus === 'saving' || !onManualSave) return;
+    setSaveStatus('saving');
+    soundManager.playButtonClick();
+    try {
+      await onManualSave();
+      setSaveStatus('saved');
+      soundManager.playQuizCorrect();
+      setTimeout(() => {
+        setSaveStatus('idle');
+      }, 2500);
+    } catch {
+      setSaveStatus('idle');
+    }
   };
 
   return (
@@ -90,14 +111,37 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
             <span>{score.toLocaleString()}점</span>
           </div>
 
-          {/* Server Sync Indicator */}
-          <div
-            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-[11px]"
-            title="모든 기기와 링크에서 데이터가 안전하게 서버에 보관됩니다"
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>서버 보관</span>
-          </div>
+          {/* Manual Save Button & Server Status Indicator */}
+          {onManualSave && (
+            <button
+              id="header-save-progress-btn"
+              type="button"
+              onClick={handleSaveClick}
+              disabled={saveStatus === 'saving'}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                saveStatus === 'saved'
+                  ? 'bg-emerald-600 text-white border border-emerald-400 shadow-md shadow-emerald-600/30'
+                  : saveStatus === 'saving'
+                  ? 'bg-amber-600/50 text-amber-200 border border-amber-500/50 animate-pulse'
+                  : 'bg-emerald-950/70 hover:bg-emerald-900/90 text-emerald-300 border border-emerald-500/40 hover:border-emerald-400'
+              }`}
+              title="현재 단계와 점수를 서버에 즉시 보관합니다"
+            >
+              {saveStatus === 'saved' ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>저장 완료!</span>
+                </>
+              ) : saveStatus === 'saving' ? (
+                <span>저장 중...</span>
+              ) : (
+                <>
+                  <Save className="w-3.5 h-3.5" />
+                  <span>서버 저장</span>
+                </>
+              )}
+            </button>
+          )}
 
           {/* Audio Controls */}
           <div className="flex items-center gap-1 bg-stone-800/80 p-1 rounded-xl border border-stone-700">

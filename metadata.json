@@ -1,6 +1,6 @@
 {
   "name": "에코 나이트 - 기후 어드벤처 RPG",
-  "description": "기후 위기에 맞서 나무, 쓰레기, 식량 자원을 관리하며 던전을 탐험하고 오염 마왕을 물리치는 학생 참여형 기후 교육 RPG 게임",
+  "description": "1단계부터 5단계까지 이어지는 직관적인 환경 퀴즈 배틀과 보스전, 실시간 BGM/효과음, 그리고 모든 기기와 링크에서 영구 저장되는 학급 랭킹 및 저장 시스템을 갖춘 기후 교육 게임",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

@@ -101,6 +101,7 @@ export default function App() {
         score: nextScore,
         currentStage: nextStageTarget,
         stagesCleared: nextCleared,
+        title: newTitle,
         bossDefeated: isBossCleared || student.bossDefeated,
       }).then(({ profile }) => {
         if (profile) {
@@ -108,6 +109,23 @@ export default function App() {
         }
       });
     }
+  };
+
+  // Manual save handler for explicit saving
+  const handleManualSave = async () => {
+    if (!student) return false;
+    const res = await saveStudentProgressAsync({
+      studentCode: student.studentCode,
+      name: student.name,
+      score,
+      currentStage,
+      stagesCleared: clearedStages,
+      bossDefeated: clearedStages.includes(5) || student.bossDefeated,
+    });
+    if (res.profile) {
+      setStudent((prev) => (prev ? { ...prev, ...res.profile } : res.profile));
+    }
+    return res.savedToServer;
   };
 
   // Select a stage directly (e.g. from stage bar)
@@ -118,6 +136,18 @@ export default function App() {
       soundManager.startBGM('boss');
     } else {
       soundManager.startBGM('adventure');
+    }
+
+    // Persist current stage selection to server immediately
+    if (student) {
+      saveStudentProgressAsync({
+        studentCode: student.studentCode,
+        name: student.name,
+        score,
+        currentStage: stageNum,
+        stagesCleared: clearedStages,
+        bossDefeated: clearedStages.includes(5) || student.bossDefeated,
+      });
     }
   };
 
@@ -203,6 +233,7 @@ export default function App() {
         onOpenLeaderboard={() => setShowLeaderboard(true)}
         onSelectStage={handleSelectStage}
         onLogout={handleLogout}
+        onManualSave={handleManualSave}
       />
 
       {/* Main 1 to 5 Stage Arena */}

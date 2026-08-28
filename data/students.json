@@ -58,5 +58,49 @@
     "bossDefeated": false,
     "title": "🌱 견습 자연 파수꾼",
     "lastUpdated": 1787896298431
+  },
+  "현종": {
+    "studentCode": "현종",
+    "name": "현종",
+    "highScore": 3400,
+    "currentScore": 3400,
+    "totalPlays": 6,
+    "monstersDefeated": 0,
+    "dungeonsCleared": 0,
+    "treesPlanted": 2,
+    "wasteRecycled": 0,
+    "bossDefeated": false,
+    "title": "♻️ 자원순환 연금술사",
+    "lastUpdated": 1787897546490,
+    "savedGameState": {
+      "stats": {
+        "hp": 100,
+        "maxHp": 100,
+        "level": 1,
+        "exp": 0,
+        "maxExp": 50,
+        "atk": 14,
+        "def": 5,
+        "gold": 40
+      },
+      "climate": {
+        "trees": 2,
+        "waste": 4,
+        "recycledCount": 0,
+        "food": 3,
+        "maxFood": 25,
+        "treeSaplings": 3,
+        "airPurity": 18
+      },
+      "monstersDefeated": 0,
+      "dungeonsCleared": 0,
+      "clearedDungeonIds": [],
+      "craftedRecipeIds": []
+    },
+    "currentStage": 3,
+    "stagesCleared": [
+      1,
+      2
+    ]
   }
 }

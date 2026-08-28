@@ -198,9 +198,13 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                             나
                           </span>
                         )}
-                        {profile.bossDefeated && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                            마왕 토벌 완료!
+                        {profile.bossDefeated || profile.stagesCleared?.includes(5) ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/30 text-amber-300 border border-amber-500/50">
+                            👑 5단계 정복
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/30">
+                            {profile.currentStage ? `${profile.currentStage}단계 도전 중` : '1단계 도전'}
                           </span>
                         )}
                       </div>
@@ -210,21 +214,16 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Right: Score & Metrics */}
-                  <div className="flex items-center gap-4 text-right">
-                    <div className="hidden sm:flex items-center gap-3 text-xs text-stone-400">
-                      <span className="flex items-center gap-1" title="심은 나무">
-                        <TreePine className="w-3.5 h-3.5 text-emerald-400" />
-                        {profile.treesPlanted}
-                      </span>
-                      <span className="flex items-center gap-1" title="재활용한 쓰레기">
-                        <Recycle className="w-3.5 h-3.5 text-cyan-400" />
-                        {profile.wasteRecycled}
+                  {/* Right: Score & Stage Progress */}
+                  <div className="flex items-center gap-3 text-right">
+                    <div className="hidden sm:flex flex-col items-end text-xs text-stone-400">
+                      <span className="text-[11px] text-stone-400">
+                        클리어: <strong className="text-emerald-400 font-mono">{profile.stagesCleared?.length || (profile.bossDefeated ? 5 : 0)}/5</strong>
                       </span>
                     </div>
 
                     <div>
-                      <div className="text-stone-400 text-[10px]">최고 기록</div>
+                      <div className="text-stone-400 text-[10px]">최고 점수</div>
                       <div className="text-base font-black text-amber-300 font-mono">
                         {profile.highScore.toLocaleString()}점
                       </div>
@@ -237,10 +236,11 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-stone-950 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400">
-          <span>최근 갱신: {lastRefreshedTime}</span>
-          <span className="text-[11px]">
-            점수는 레벨, 토벌, 나무, 재활용, 마왕 격파 시 즉시 서버에 저장됩니다.
+        <div className="p-4 bg-stone-950 border-t border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-stone-400">
+          <span>최근 서버 동기화: {lastRefreshedTime}</span>
+          <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            모든 기기와 링크에서 점수와 단계 기록이 서버에 영구 보관됩니다
           </span>
         </div>
       </div>

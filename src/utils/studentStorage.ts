@@ -274,6 +274,37 @@ export async function fetchLeaderboardFromServer(): Promise<StudentProfile[]> {
   return getLeaderboardList();
 }
 
+/**
+ * Direct lookup of a student's profile on the server by code
+ */
+export async function fetchStudentFromServer(
+  studentCode: string
+): Promise<StudentProfile | null> {
+  const cleanCode = studentCode.trim();
+  if (!cleanCode) return null;
+
+  try {
+    const res = await fetch(`/api/student/${encodeURIComponent(cleanCode)}`, {
+      cache: 'no-store',
+    });
+    if (res.ok) {
+      const profile: StudentProfile = await res.json();
+      if (profile && profile.studentCode) {
+        // Cache locally
+        const profiles = getStoredProfiles();
+        profiles[profile.studentCode] = profile;
+        saveProfilesMap(profiles);
+        return profile;
+      }
+    }
+  } catch (err) {
+    console.warn('Student server fetch failed, fallback to local:', err);
+  }
+
+  const localMap = getStoredProfiles();
+  return localMap[cleanCode] || null;
+}
+
 export async function loginStudentAsync(
   studentCode: string,
   name: string
@@ -290,7 +321,14 @@ export async function loginStudentAsync(
     if (res.ok) {
       const data = await res.json();
       if (data.profile) {
-        const serverProfile: StudentProfile = data.profile;
+        const serverProfile: StudentProfile = {
+          ...localProfile,
+          ...data.profile,
+          currentStage: data.profile.currentStage ?? localProfile.currentStage ?? 1,
+          stagesCleared: data.profile.stagesCleared ?? localProfile.stagesCleared ?? [],
+          currentScore: data.profile.currentScore ?? localProfile.currentScore ?? 0,
+          highScore: data.profile.highScore ?? localProfile.highScore ?? 0,
+        };
         const profiles = getStoredProfiles();
         profiles[serverProfile.studentCode] = serverProfile;
         saveProfilesMap(profiles);
@@ -311,6 +349,7 @@ export interface SaveStudentPayload {
   score?: number;
   currentStage?: number;
   stagesCleared?: number[];
+  title?: string;
   stats?: PlayerStats;
   climate?: ClimateState;
   monstersDefeated?: number;
@@ -322,7 +361,7 @@ export interface SaveStudentPayload {
 
 export async function saveStudentProgressAsync(
   payload: SaveStudentPayload
-): Promise<{ profile: StudentProfile; rank?: number; score?: number }> {
+): Promise<{ profile: StudentProfile; rank?: number; score?: number; savedToServer: boolean }> {
   // 1. Immediately update local state for zero latency
   const profiles = getStoredProfiles();
   let localProfile = profiles[payload.studentCode];
@@ -339,7 +378,11 @@ export async function saveStudentProgressAsync(
     localProfile.currentStage = Math.max(localProfile.currentStage || 1, payload.currentStage);
   }
   if (payload.stagesCleared) {
-    localProfile.stagesCleared = payload.stagesCleared;
+    const existing = localProfile.stagesCleared || [];
+    localProfile.stagesCleared = Array.from(new Set([...existing, ...payload.stagesCleared])).sort((a, b) => a - b);
+  }
+  if (payload.title) {
+    localProfile.title = payload.title;
   }
   if (payload.bossDefeated) {
     localProfile.bossDefeated = true;
@@ -360,13 +403,21 @@ export async function saveStudentProgressAsync(
     if (res.ok) {
       const data = await res.json();
       if (data.profile) {
-        const serverProfile: StudentProfile = data.profile;
+        const serverProfile: StudentProfile = {
+          ...localProfile,
+          ...data.profile,
+          currentStage: data.profile.currentStage ?? localProfile.currentStage ?? 1,
+          stagesCleared: data.profile.stagesCleared ?? localProfile.stagesCleared ?? [],
+          currentScore: data.profile.currentScore ?? localProfile.currentScore ?? 0,
+          highScore: data.profile.highScore ?? localProfile.highScore ?? 0,
+        };
         profiles[serverProfile.studentCode] = serverProfile;
         saveProfilesMap(profiles);
         return {
           profile: serverProfile,
           rank: data.rank,
           score: data.score,
+          savedToServer: true,
         };
       }
     }
@@ -374,7 +425,7 @@ export async function saveStudentProgressAsync(
     console.warn('Server save failed, using local result:', err);
   }
 
-  return { profile: localProfile };
+  return { profile: localProfile, savedToServer: false };
 }
 
 export async function resetAllStudentDataAsync(): Promise<void> {

@@ -3,6 +3,7 @@ import { StudentProfile } from '../types';
 import {
   loginStudentAsync,
   fetchLeaderboardFromServer,
+  fetchStudentFromServer,
   getLastStudentCode,
   getStoredProfiles,
 } from '../utils/studentStorage';
@@ -19,6 +20,7 @@ import {
   CheckCircle2,
   Server,
   Play,
+  CloudCheck,
 } from 'lucide-react';
 import prologueImg from '../assets/images/climate_prologue_1787895354766.jpg';
 
@@ -40,7 +42,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   const [topStudents, setTopStudents] = useState<StudentProfile[]>([]);
   const [matchedProfile, setMatchedProfile] = useState<StudentProfile | null>(null);
 
-  const quickCodes = ['ECO-01', 'ECO-02', '301-15', '지구지킴이'];
+  const quickCodes = ['현종', 'ECO-01', 'ECO-02', '301-15'];
 
   // Load server status & leaderboard on mount
   useEffect(() => {
@@ -61,7 +63,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     };
   }, []);
 
-  // Check if input code matches an existing student record
+  // Check if input code matches an existing student record (checks local cache + server directly for cross-link support)
   useEffect(() => {
     const clean = studentCode.trim();
     if (!clean) {
@@ -74,9 +76,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       if (!studentName && localMap[clean].name) {
         setStudentName(localMap[clean].name);
       }
-    } else {
-      setMatchedProfile(null);
     }
+
+    // Direct server query to find profile even on a completely different computer or browser link
+    let isCurrent = true;
+    const timer = setTimeout(async () => {
+      const serverProfile = await fetchStudentFromServer(clean);
+      if (!isCurrent) return;
+      if (serverProfile) {
+        setMatchedProfile(serverProfile);
+        if (!studentName && serverProfile.name) {
+          setStudentName(serverProfile.name);
+        }
+      }
+    }, 200);
+
+    return () => {
+      isCurrent = false;
+      clearTimeout(timer);
+    };
   }, [studentCode]);
 
   const handleSubmit = async (e: React.FormEvent, startFresh = false) => {
@@ -221,19 +239,23 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             <div className="p-3.5 rounded-2xl bg-amber-950/40 border border-amber-500/50 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-amber-300 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-amber-400" />
-                  기존 모험 기록 감지됨!
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  서버 연동 완료: 기존 기록 발견!
                 </span>
-                <span className="text-stone-300 font-mono font-bold text-sm">
-                  최고 {matchedProfile.highScore.toLocaleString()}점
+                <span className="text-stone-100 font-mono font-bold text-sm bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/40">
+                  {matchedProfile.highScore.toLocaleString()}점
                 </span>
               </div>
-              <div className="text-[11px] text-stone-300 flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold">
-                  {matchedProfile.title}
+              <div className="text-xs text-stone-300 flex items-center justify-between">
+                <span className="text-stone-300">
+                  진행 상황:{' '}
+                  <strong className="text-emerald-400">
+                    {matchedProfile.currentStage || 1}단계 도전
+                  </strong>{' '}
+                  ({matchedProfile.stagesCleared?.length || (matchedProfile.bossDefeated ? 5 : 0)}/5 완료)
                 </span>
-                <span>
-                  몬스터 {matchedProfile.monstersDefeated}마리 · 나무 {matchedProfile.treesPlanted}그루
+                <span className="px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-semibold text-[11px]">
+                  {matchedProfile.title}
                 </span>
               </div>
             </div>

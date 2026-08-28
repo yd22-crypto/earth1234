@@ -15,6 +15,8 @@ interface StudentProfileData {
   highScore: number;
   currentScore?: number;
   totalPlays: number;
+  currentStage?: number;
+  stagesCleared?: number[];
   monstersDefeated: number;
   dungeonsCleared: number;
   treesPlanted: number;
@@ -33,6 +35,8 @@ const DEFAULT_DEMO_STUDENTS: StudentProfileData[] = [
     highScore: 8850,
     currentScore: 8850,
     totalPlays: 4,
+    currentStage: 5,
+    stagesCleared: [1, 2, 3, 4, 5],
     monstersDefeated: 22,
     dungeonsCleared: 3,
     treesPlanted: 28,
@@ -48,12 +52,14 @@ const DEFAULT_DEMO_STUDENTS: StudentProfileData[] = [
     highScore: 6720,
     currentScore: 6720,
     totalPlays: 3,
+    currentStage: 4,
+    stagesCleared: [1, 2, 3],
     monstersDefeated: 16,
     dungeonsCleared: 2,
     treesPlanted: 20,
     wasteRecycled: 32,
     bossDefeated: false,
-    title: '🌲 숲의 정령 수호자',
+    title: '🌊 바다의 수호 기사',
     lastUpdated: Date.now() - 3600000 * 5,
   },
   {
@@ -63,6 +69,8 @@ const DEFAULT_DEMO_STUDENTS: StudentProfileData[] = [
     highScore: 5180,
     currentScore: 5180,
     totalPlays: 2,
+    currentStage: 3,
+    stagesCleared: [1, 2],
     monstersDefeated: 12,
     dungeonsCleared: 1,
     treesPlanted: 14,
@@ -78,18 +86,27 @@ const DEFAULT_DEMO_STUDENTS: StudentProfileData[] = [
     highScore: 3450,
     currentScore: 3450,
     totalPlays: 2,
+    currentStage: 2,
+    stagesCleared: [1],
     monstersDefeated: 9,
     dungeonsCleared: 1,
     treesPlanted: 8,
     wasteRecycled: 16,
     bossDefeated: false,
-    title: '🌱 견습 자연 파수꾼',
+    title: '🌲 맑은공기 파수꾼',
     lastUpdated: Date.now() - 3600000 * 14,
   },
 ];
 
+// In-memory cache for ultra-fast and reliable cross-request state
+let memoryStudentsMap: Record<string, StudentProfileData> | null = null;
+
 // Helper functions for reading/writing persistent data
 function readStudentsMap(): Record<string, StudentProfileData> {
+  if (memoryStudentsMap && Object.keys(memoryStudentsMap).length > 0) {
+    return memoryStudentsMap;
+  }
+
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -100,19 +117,23 @@ function readStudentsMap(): Record<string, StudentProfileData> {
         initialMap[s.studentCode] = s;
       });
       fs.writeFileSync(DATA_FILE, JSON.stringify(initialMap, null, 2), 'utf-8');
+      memoryStudentsMap = initialMap;
       return initialMap;
     }
     const content = fs.readFileSync(DATA_FILE, 'utf-8');
     const parsed = JSON.parse(content);
-    return parsed || {};
+    memoryStudentsMap = parsed || {};
+    return memoryStudentsMap;
   } catch (err) {
     console.error('Error reading students file:', err);
-    return {};
+    memoryStudentsMap = {};
+    return memoryStudentsMap;
   }
 }
 
 function writeStudentsMap(map: Record<string, StudentProfileData>): boolean {
   try {
+    memoryStudentsMap = { ...map };
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
@@ -189,10 +210,16 @@ async function startServer() {
     }
   });
 
-  // API 3: Get single student profile
+  // API 3: Get single student profile (handles URL encoded Korean student codes)
   app.get('/api/student/:studentCode', (req: Request, res: Response) => {
     try {
-      const code = req.params.studentCode?.trim();
+      const raw = req.params.studentCode || '';
+      let code = raw.trim();
+      try {
+        code = decodeURIComponent(raw).trim();
+      } catch {
+        code = raw.trim();
+      }
       const map = readStudentsMap();
       if (!code || !map[code]) {
         return res.status(404).json({ error: 'Student not found' });
@@ -218,10 +245,12 @@ async function startServer() {
       let profile = map[cleanCode];
 
       if (profile) {
-        // Existing student
+        // Existing student: update name if custom name provided, preserve currentStage & stagesCleared
         if (cleanName && cleanName !== '익명의 수호자') {
           profile.name = cleanName;
         }
+        profile.currentStage = profile.currentStage || 1;
+        profile.stagesCleared = profile.stagesCleared || [];
         profile.totalPlays = (profile.totalPlays || 1) + 1;
         profile.lastUpdated = Date.now();
       } else {
@@ -229,15 +258,17 @@ async function startServer() {
         profile = {
           studentCode: cleanCode,
           name: cleanName,
-          highScore: 350, // Starting level 1 score
-          currentScore: 350,
+          highScore: 0,
+          currentScore: 0,
           totalPlays: 1,
+          currentStage: 1,
+          stagesCleared: [],
           monstersDefeated: 0,
           dungeonsCleared: 0,
-          treesPlanted: 2,
+          treesPlanted: 0,
           wasteRecycled: 0,
           bossDefeated: false,
-          title: '🌱 새내기 에코 나이트',
+          title: '🌱 초급 수호자',
           lastUpdated: Date.now(),
         };
       }
@@ -258,13 +289,20 @@ async function startServer() {
       const {
         studentCode,
         name,
+        score,
+        currentScore,
+        currentStage,
+        stagesCleared,
+        title,
+        bossDefeated,
         stats,
         climate,
         monstersDefeated,
         dungeonsCleared,
+        treesPlanted,
+        wasteRecycled,
         clearedDungeonIds,
         craftedRecipeIds,
-        bossDefeated,
       } = req.body;
 
       const cleanCode = (studentCode || '').trim();
@@ -282,48 +320,86 @@ async function startServer() {
           highScore: 0,
           currentScore: 0,
           totalPlays: 1,
+          currentStage: 1,
+          stagesCleared: [],
           monstersDefeated: 0,
           dungeonsCleared: 0,
           treesPlanted: 0,
           wasteRecycled: 0,
           bossDefeated: false,
-          title: '🌱 새내기 에코 나이트',
+          title: '🌱 초급 수호자',
           lastUpdated: Date.now(),
         };
       }
 
-      // Calculate score based on actual game state or direct score
-      const calculated = calculateScore({
-        level: stats?.level ?? 1,
-        monstersDefeated: monstersDefeated ?? profile.monstersDefeated ?? 0,
-        dungeonsCleared: dungeonsCleared ?? profile.dungeonsCleared ?? 0,
-        treesPlanted: climate?.trees ?? profile.treesPlanted ?? 2,
-        wasteRecycled: climate?.recycledCount ?? profile.wasteRecycled ?? 0,
-        foodRemaining: climate?.food ?? 5,
-        bossDefeated: Boolean(bossDefeated || profile.bossDefeated),
-      });
-
-      const explicitScore = Number(req.body.score || req.body.currentScore || 0);
-      const score = Math.max(calculated.score, explicitScore, profile.currentScore || 0);
-      const title = req.body.title || calculated.title;
-
-      profile.currentScore = score;
-      profile.highScore = Math.max(profile.highScore || 0, score);
-      profile.title = title;
-      profile.monstersDefeated = Math.max(profile.monstersDefeated || 0, monstersDefeated ?? 0);
-      profile.dungeonsCleared = Math.max(profile.dungeonsCleared || 0, dungeonsCleared ?? 0);
-      profile.treesPlanted = Math.max(profile.treesPlanted || 0, climate?.trees ?? 0);
-      profile.wasteRecycled = Math.max(profile.wasteRecycled || 0, climate?.recycledCount ?? 0);
-
-      if (bossDefeated) {
-        profile.bossDefeated = true;
-      }
       if (name && name.trim()) {
         profile.name = name.trim();
       }
-      profile.lastUpdated = Date.now();
 
-      // Save complete snapshot of RPG game state for seamless continuation
+      // Handle scores: ensure score never decreases
+      const rawScore = score ?? currentScore;
+      if (typeof rawScore === 'number' && !isNaN(rawScore)) {
+        profile.currentScore = Math.max(profile.currentScore || 0, rawScore);
+        profile.highScore = Math.max(profile.highScore || 0, rawScore);
+      }
+
+      // Handle current stage
+      if (currentStage) {
+        const parsedStage = Math.min(5, Math.max(1, Number(currentStage)));
+        profile.currentStage = Math.max(profile.currentStage || 1, parsedStage);
+      } else if (!profile.currentStage) {
+        profile.currentStage = 1;
+      }
+
+      // Handle cleared stages list
+      if (Array.isArray(stagesCleared)) {
+        const existing = profile.stagesCleared || [];
+        const merged = Array.from(new Set([...existing, ...stagesCleared])).sort((a, b) => a - b);
+        profile.stagesCleared = merged;
+      } else if (!profile.stagesCleared) {
+        profile.stagesCleared = [];
+      }
+
+      // Boss defeated flag
+      const isBossDefeated = Boolean(
+        bossDefeated ||
+        profile.bossDefeated ||
+        profile.stagesCleared?.includes(5) ||
+        (profile.currentStage && profile.currentStage >= 5 && profile.stagesCleared?.length === 5)
+      );
+      if (isBossDefeated) {
+        profile.bossDefeated = true;
+      }
+
+      // Title determination based on stages completed
+      if (title && title.trim()) {
+        profile.title = title.trim();
+      } else if (profile.bossDefeated || profile.stagesCleared?.includes(5)) {
+        profile.title = '👑 지구의 구원자';
+      } else if (profile.stagesCleared?.includes(4)) {
+        profile.title = '🌊 바다의 수호 기사';
+      } else if (profile.stagesCleared?.includes(3)) {
+        profile.title = '♻️ 자원순환 연금술사';
+      } else if (profile.stagesCleared?.includes(2)) {
+        profile.title = '🌲 맑은공기 파수꾼';
+      } else {
+        profile.title = '🌱 초급 수호자';
+      }
+
+      if (typeof monstersDefeated === 'number') {
+        profile.monstersDefeated = Math.max(profile.monstersDefeated || 0, monstersDefeated);
+      }
+      if (typeof dungeonsCleared === 'number') {
+        profile.dungeonsCleared = Math.max(profile.dungeonsCleared || 0, dungeonsCleared);
+      }
+      if (typeof treesPlanted === 'number') {
+        profile.treesPlanted = Math.max(profile.treesPlanted || 0, treesPlanted);
+      }
+      if (typeof wasteRecycled === 'number') {
+        profile.wasteRecycled = Math.max(profile.wasteRecycled || 0, wasteRecycled);
+      }
+
+      // Save complete snapshot if available
       if (stats && climate) {
         profile.savedGameState = {
           stats,
@@ -334,6 +410,8 @@ async function startServer() {
           craftedRecipeIds: craftedRecipeIds || [],
         };
       }
+
+      profile.lastUpdated = Date.now();
 
       map[cleanCode] = profile;
       writeStudentsMap(map);
@@ -346,7 +424,7 @@ async function startServer() {
         success: true,
         profile,
         rank,
-        score,
+        score: profile.highScore,
       });
     } catch (err: any) {
       console.error('Error saving student result:', err);
