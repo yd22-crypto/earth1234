@@ -1,0 +1,62 @@
+{
+  "ECO-01": {
+    "studentCode": "ECO-01",
+    "name": "김민지",
+    "className": "3학년 1반",
+    "highScore": 8850,
+    "currentScore": 8850,
+    "totalPlays": 4,
+    "monstersDefeated": 22,
+    "dungeonsCleared": 3,
+    "treesPlanted": 28,
+    "wasteRecycled": 46,
+    "bossDefeated": true,
+    "title": "👑 지구의 구원자",
+    "lastUpdated": 1787896298431
+  },
+  "ECO-02": {
+    "studentCode": "ECO-02",
+    "name": "이도윤",
+    "className": "3학년 1반",
+    "highScore": 6720,
+    "currentScore": 6720,
+    "totalPlays": 3,
+    "monstersDefeated": 16,
+    "dungeonsCleared": 2,
+    "treesPlanted": 20,
+    "wasteRecycled": 32,
+    "bossDefeated": false,
+    "title": "🌲 숲의 정령 수호자",
+    "lastUpdated": 1787896298431
+  },
+  "ECO-03": {
+    "studentCode": "ECO-03",
+    "name": "박서아",
+    "className": "3학년 1반",
+    "highScore": 5180,
+    "currentScore": 5180,
+    "totalPlays": 2,
+    "monstersDefeated": 12,
+    "dungeonsCleared": 1,
+    "treesPlanted": 14,
+    "wasteRecycled": 24,
+    "bossDefeated": false,
+    "title": "♻️ 자원순환 연금술사",
+    "lastUpdated": 1787896298431
+  },
+  "ECO-04": {
+    "studentCode": "ECO-04",
+    "name": "최하준",
+    "className": "3학년 1반",
+    "highScore": 3450,
+    "currentScore": 3450,
+    "totalPlays": 2,
+    "monstersDefeated": 9,
+    "dungeonsCleared": 1,
+    "treesPlanted": 8,
+    "wasteRecycled": 16,
+    "bossDefeated": false,
+    "title": "🌱 견습 자연 파수꾼",
+    "lastUpdated": 1787896298431
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "에코 나이트 - 기후 어드벤처 RPG",
+  "description": "기후 위기에 맞서 나무, 쓰레기, 식량 자원을 관리하며 던전을 탐험하고 오염 마왕을 물리치는 학생 참여형 기후 교육 RPG 게임",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
