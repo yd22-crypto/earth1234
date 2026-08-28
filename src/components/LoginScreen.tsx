@@ -147,7 +147,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>서버 연동 기록 보관 중</span>
+            <span>클라우드 DB 동기화 활성 (어떤 URL이든 저장)</span>
           </div>
 
           <button

@@ -1,0 +1,88 @@
+{
+  "entities": {
+    "StudentProfile": {
+      "title": "StudentProfile",
+      "description": "Student game progress, high score, current stage, and achievements across all devices and URLs",
+      "type": "object",
+      "properties": {
+        "studentCode": {
+          "type": "string",
+          "description": "Unique student identifier or classroom nickname",
+          "maxLength": 64
+        },
+        "name": {
+          "type": "string",
+          "description": "Student display name",
+          "maxLength": 64
+        },
+        "highScore": {
+          "type": "number",
+          "description": "Highest score achieved"
+        },
+        "currentScore": {
+          "type": "number",
+          "description": "Current play score"
+        },
+        "currentStage": {
+          "type": "number",
+          "description": "Current unlocked stage (1-5)"
+        },
+        "stagesCleared": {
+          "type": "array",
+          "description": "Array of cleared stage numbers"
+        },
+        "totalPlays": {
+          "type": "number",
+          "description": "Total games or logins"
+        },
+        "title": {
+          "type": "string",
+          "description": "Earned title badge",
+          "maxLength": 64
+        },
+        "monstersDefeated": {
+          "type": "number",
+          "description": "Number of pollution monsters defeated"
+        },
+        "dungeonsCleared": {
+          "type": "number",
+          "description": "Number of dungeons or zones cleared"
+        },
+        "treesPlanted": {
+          "type": "number",
+          "description": "Trees planted"
+        },
+        "wasteRecycled": {
+          "type": "number",
+          "description": "Waste recycled"
+        },
+        "bossDefeated": {
+          "type": "boolean",
+          "description": "Whether pollution lord boss was defeated"
+        },
+        "lastUpdated": {
+          "type": "number",
+          "description": "Timestamp in ms of last activity"
+        }
+      },
+      "required": [
+        "studentCode",
+        "name",
+        "highScore",
+        "currentScore",
+        "currentStage",
+        "stagesCleared",
+        "totalPlays",
+        "title",
+        "bossDefeated",
+        "lastUpdated"
+      ]
+    }
+  },
+  "firestore": {
+    "/students/{studentCode}": {
+      "schema": "StudentProfile",
+      "description": "Collection of student profiles indexed by student code"
+    }
+  }
+}

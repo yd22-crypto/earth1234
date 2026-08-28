@@ -87,7 +87,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                 <h3 className="text-lg font-black text-white">학급 명예의 전당</h3>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  서버 실시간 연동
+                  클라우드 DB 동기화
                 </span>
               </div>
               <p className="text-xs text-stone-400 mt-0.5">

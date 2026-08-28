@@ -125,19 +125,19 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
                   ? 'bg-amber-600/50 text-amber-200 border border-amber-500/50 animate-pulse'
                   : 'bg-emerald-950/70 hover:bg-emerald-900/90 text-emerald-300 border border-emerald-500/40 hover:border-emerald-400'
               }`}
-              title="현재 단계와 점수를 서버에 즉시 보관합니다"
+              title="현재 단계와 점수를 클라우드에 영구 저장합니다 (어떤 URL이나 기기에서도 동기화)"
             >
               {saveStatus === 'saved' ? (
                 <>
                   <Check className="w-3.5 h-3.5" />
-                  <span>저장 완료!</span>
+                  <span>클라우드 저장 완료!</span>
                 </>
               ) : saveStatus === 'saving' ? (
-                <span>저장 중...</span>
+                <span>클라우드 저장 중...</span>
               ) : (
                 <>
                   <Save className="w-3.5 h-3.5" />
-                  <span>서버 저장</span>
+                  <span>클라우드 저장</span>
                 </>
               )}
             </button>

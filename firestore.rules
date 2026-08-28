@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidStudent(data) {
+      return data.studentCode is string && data.studentCode.size() > 0 && data.studentCode.size() <= 64 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 64 &&
+             data.highScore is number && data.highScore >= 0 && data.highScore <= 500000 &&
+             data.currentScore is number && data.currentScore >= 0 && data.currentScore <= 500000 &&
+             data.currentStage is number && data.currentStage >= 1 && data.currentStage <= 5 &&
+             data.stagesCleared is list && data.stagesCleared.size() <= 5 &&
+             data.totalPlays is number && data.totalPlays >= 1 && data.totalPlays <= 50000 &&
+             data.title is string && data.title.size() <= 64 &&
+             data.bossDefeated is bool &&
+             data.lastUpdated is number;
+    }
+
+    match /students/{studentCode} {
+      allow read: if true;
+      allow create, update: if isValidStudent(request.resource.data);
+      allow delete: if false;
+    }
+  }
+}
