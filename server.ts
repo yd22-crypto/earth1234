@@ -292,8 +292,8 @@ async function startServer() {
         };
       }
 
-      // Calculate score based on actual game state
-      const { score, title } = calculateScore({
+      // Calculate score based on actual game state or direct score
+      const calculated = calculateScore({
         level: stats?.level ?? 1,
         monstersDefeated: monstersDefeated ?? profile.monstersDefeated ?? 0,
         dungeonsCleared: dungeonsCleared ?? profile.dungeonsCleared ?? 0,
@@ -302,6 +302,10 @@ async function startServer() {
         foodRemaining: climate?.food ?? 5,
         bossDefeated: Boolean(bossDefeated || profile.bossDefeated),
       });
+
+      const explicitScore = Number(req.body.score || req.body.currentScore || 0);
+      const score = Math.max(calculated.score, explicitScore, profile.currentScore || 0);
+      const title = req.body.title || calculated.title;
 
       profile.currentScore = score;
       profile.highScore = Math.max(profile.highScore || 0, score);

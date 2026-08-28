@@ -308,10 +308,13 @@ export async function loginStudentAsync(
 export interface SaveStudentPayload {
   studentCode: string;
   name: string;
-  stats: PlayerStats;
-  climate: ClimateState;
-  monstersDefeated: number;
-  dungeonsCleared: number;
+  score?: number;
+  currentStage?: number;
+  stagesCleared?: number[];
+  stats?: PlayerStats;
+  climate?: ClimateState;
+  monstersDefeated?: number;
+  dungeonsCleared?: number;
   clearedDungeonIds?: string[];
   craftedRecipeIds?: string[];
   bossDefeated?: boolean;
@@ -321,15 +324,30 @@ export async function saveStudentProgressAsync(
   payload: SaveStudentPayload
 ): Promise<{ profile: StudentProfile; rank?: number; score?: number }> {
   // 1. Immediately update local state for zero latency
-  const localProfile = updateStudentResult(payload.studentCode, {
-    level: payload.stats.level,
-    monstersDefeated: payload.monstersDefeated,
-    dungeonsCleared: payload.dungeonsCleared,
-    treesPlanted: payload.climate.trees,
-    wasteRecycled: payload.climate.recycledCount,
-    foodRemaining: payload.climate.food,
-    bossDefeated: Boolean(payload.bossDefeated),
-  });
+  const profiles = getStoredProfiles();
+  let localProfile = profiles[payload.studentCode];
+
+  if (!localProfile) {
+    localProfile = loginOrRegisterStudent(payload.studentCode, payload.name);
+  }
+
+  if (typeof payload.score === 'number') {
+    localProfile.currentScore = Math.max(localProfile.currentScore || 0, payload.score);
+    localProfile.highScore = Math.max(localProfile.highScore || 0, payload.score);
+  }
+  if (payload.currentStage) {
+    localProfile.currentStage = Math.max(localProfile.currentStage || 1, payload.currentStage);
+  }
+  if (payload.stagesCleared) {
+    localProfile.stagesCleared = payload.stagesCleared;
+  }
+  if (payload.bossDefeated) {
+    localProfile.bossDefeated = true;
+    localProfile.title = '👑 지구의 구원자';
+  }
+  localProfile.lastUpdated = Date.now();
+  profiles[payload.studentCode] = localProfile;
+  saveProfilesMap(profiles);
 
   // 2. Persist to server backend across devices/links
   try {
@@ -343,7 +361,6 @@ export async function saveStudentProgressAsync(
       const data = await res.json();
       if (data.profile) {
         const serverProfile: StudentProfile = data.profile;
-        const profiles = getStoredProfiles();
         profiles[serverProfile.studentCode] = serverProfile;
         saveProfilesMap(profiles);
         return {

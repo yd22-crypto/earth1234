@@ -1,22 +1,47 @@
 export type GameScreen =
   | 'LOGIN'
   | 'STORY_PROLOGUE'
-  | 'VILLAGE'
-  | 'HUNT'
-  | 'BATTLE'
-  | 'UPCYCLE_WORKSHOP'
-  | 'TREE_GARDEN'
-  | 'DUNGEON_SELECT'
+  | 'STAGE_PLAY'
   | 'ENDING'
   | 'LEADERBOARD';
 
+export interface StageQuiz {
+  id: string;
+  question: string;
+  options: [string, string];
+  correctIndex: number;
+  explanation: string;
+}
+
+export interface StageData {
+  stageNumber: number; // 1 to 5
+  title: string;
+  subtitle: string;
+  topic: string;
+  monsterName: string;
+  monsterEmoji: string;
+  monsterMaxHp: number;
+  monsterAtk: number;
+  bgImage: string;
+  badge: string;
+  clearPoints: number;
+  fact: string;
+  quizzes: StageQuiz[];
+}
+
 export interface SavedGameState {
-  stats: PlayerStats;
-  climate: ClimateState;
-  monstersDefeated: number;
-  dungeonsCleared: number;
-  clearedDungeonIds: string[];
-  craftedRecipeIds: string[];
+  currentStage: number;
+  score: number;
+  hp: number;
+  maxHp: number;
+  ecoEnergy: number;
+  stagesCleared: number[];
+  stats?: PlayerStats;
+  climate?: ClimateState;
+  monstersDefeated?: number;
+  dungeonsCleared?: number;
+  clearedDungeonIds?: string[];
+  craftedRecipeIds?: string[];
 }
 
 export interface StudentProfile {
@@ -26,6 +51,8 @@ export interface StudentProfile {
   highScore: number;
   currentScore?: number;
   totalPlays: number;
+  currentStage?: number;
+  stagesCleared?: number[];
   monstersDefeated: number;
   dungeonsCleared: number;
   treesPlanted: number;
